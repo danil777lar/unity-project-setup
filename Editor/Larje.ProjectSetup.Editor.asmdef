@@ -1,0 +1,22 @@
+{
+    "name": "Larje.ProjectSetup.Editor",
+    "rootNamespace": "Larje.ProjectSetup.Editor",
+    "references": [
+        "Larje.Core",
+        "Larje.Core.Zenject",
+        "Zenject",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

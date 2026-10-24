@@ -1,0 +1,20 @@
+{
+  "name": "com.larje.projectsetup",
+  "version": "0.1.0",
+  "displayName": "Larje Project Setup",
+  "description": "Editor-only bootstrapper that builds a project base on Larje packages: player and URP settings, input actions, ids, configs, UI screen, scenes, project assembly with installers, Zenject ProjectContext and Asset Store package import. Runs from the menu or in batch mode.",
+  "unity": "6000.3",
+  "author": {
+    "name": "Danil Kolbasenko",
+    "email": "danil777lar@gmail.com",
+    "url": "https://github.com/danil777lar"
+  },
+  "dependencies": {
+    "com.larje.core": "0.1.0",
+    "com.larje.zenject": "9.2.0",
+    "com.unity.inputsystem": "1.11.0",
+    "com.unity.render-pipelines.universal": "17.0.0",
+    "com.unity.ugui": "2.0.0"
+  },
+  "keywords": ["larje", "setup", "bootstrap", "template"]
+}

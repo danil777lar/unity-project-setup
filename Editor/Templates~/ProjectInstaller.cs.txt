@@ -1,0 +1,17 @@
+using Larje.Core.UI;
+using UnityEngine;
+using Zenject;
+
+namespace {{Namespace}}
+{
+    [CreateAssetMenu(fileName = "ProjectInstaller", menuName = "{{Namespace}}/Project Installer")]
+    public sealed class ProjectInstaller : ScriptableObjectInstaller<ProjectInstaller>
+    {
+        [SerializeField] private UIScreenId _mainMenuScreen;
+
+        public override void InstallBindings()
+        {
+            Container.BindInterfacesTo<MenuScreenController>().AsSingle().WithArguments(_mainMenuScreen);
+        }
+    }
+}

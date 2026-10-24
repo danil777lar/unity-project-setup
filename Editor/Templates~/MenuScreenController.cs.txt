@@ -1,0 +1,43 @@
+using System;
+using Larje.Core;
+using Larje.Core.GameFlow;
+using Larje.Core.UI;
+
+namespace {{Namespace}}
+{
+    public sealed class MenuScreenController : IInitializableService, IDisposable
+    {
+        private readonly UIScreenId _mainMenuScreen;
+        private readonly IGameStateService _gameState;
+        private readonly IUIService _ui;
+
+        public MenuScreenController(UIScreenId mainMenuScreen, IGameStateService gameState, IUIService ui)
+        {
+            _mainMenuScreen = mainMenuScreen;
+            _gameState = gameState;
+            _ui = ui;
+        }
+
+        public void Initialize()
+        {
+            _gameState.Changed += OnGameStateChanged;
+            if (_gameState.Is(_gameState.States.Menu))
+            {
+                _ui.OpenScreen(_mainMenuScreen);
+            }
+        }
+
+        public void Dispose()
+        {
+            _gameState.Changed -= OnGameStateChanged;
+        }
+
+        private void OnGameStateChanged(GameStateId previous, GameStateId current)
+        {
+            if (current == _gameState.States.Menu)
+            {
+                _ui.OpenScreen(_mainMenuScreen);
+            }
+        }
+    }
+}

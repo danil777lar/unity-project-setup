@@ -15,7 +15,7 @@ Unity 6 + URP project built on Larje packages (`com.larje.*`: `com.larje.core` s
 - `UIMockups/` (project root): mockup layout JSON and screenshots used by `UIMockupTests` (layout parity at the reference resolution).
 - `Assets/_Project/Scenes`: `Splash` (build index 0) and `Main`. `AppFlowService` shows the splash, sets the `Menu` state and loads `Main`. `MenuScreenController` opens the main menu screen.
 - `Assets/_Project/Settings`: URP asset and `GameInput.inputactions` (Player and UI maps).
-- `Assets/_Project/Editor`: editor assembly `{{Namespace}}.Editor`. `Builders/` holds idempotent builder scripts that create or update scenes, prefabs, configs and level data; run them in batch mode with the `unity-editor` skill (`run_method.py`).
+- `Assets/_Project/Editor`: editor assembly `{{Namespace}}.Editor`. `Builders/` holds idempotent builder scripts that create or update scenes, prefabs, configs and level data; run them with the `unity-editor` skill (`run_method.py`: in the running editor through the Unity CLI, or in batch mode when no editor is open).
 - `Assets/_Project/Tests/PlayMode`: playtests (assembly `{{Namespace}}.Playtests`) built on `Larje.ProjectSetup.Editor.Playtest.PlaytestSession`. `SmokePlaytest` boots from `Splash` to the main menu and takes screenshots.
 
 ## Architecture rules
@@ -37,12 +37,14 @@ Unity 6 + URP project built on Larje packages (`com.larje.*`: `com.larje.core` s
 
 ## Working with the editor
 
-- Change `.unity`, `.prefab`, `.asset` and `.mat` files only through Unity (MCP tools or editor scripts), never as text.
-- After every C# change, refresh, wait until compilation is idle, and check that the console has no errors.
-- Unity AI MCP tools: `Larje.ValidateProject` (config problems), `Larje.ListConfigs`, `Larje.ListIds` / `Larje.CreateId`, `Larje.ReadSave` / `Larje.WriteSaveSection`, `Larje.ListDebugCommands` / `Larje.RunDebugCommand` (Play Mode).
+- Change `.unity`, `.prefab`, `.asset` and `.mat` files only through Unity (builder scripts or `unity command` against a running editor), never as text.
+- The project has `com.unity.pipeline`, so a running editor (the user's GUI editor, or a headless one started with the `unity-editor` skill: `editor.py up`) is driven with the Unity CLI. Pass `--project-path <project>` to every call.
+- After every C# change run `unity recompile --project-path <project>` (seconds; prints compile errors, exit 6 on errors), then check `unity command console get --project-path <project> -- --level error`. Without a running editor use `compile.py` from the `unity-editor` skill.
+- Useful built-in commands: `unity command script eval '<C#>'`, `unity command scene get_hierarchy`, `unity command scene save`, `unity command editor status`. `unity command` lists the groups, `unity command <group>` their commands.
+- Larje commands: `unity command larje validate` (config problems), `larje.configs list`, `larje.ids list` / `larje.ids create`, `larje.save read` / `larje.save write`, `larje.debug list` / `larje.debug run` (Play Mode). `unity command larje` lists them with their parameters.
 
 ## Playtests and builds
 
 - Playtests are PlayMode tests: `PlaytestSession` loads scenes, waits, clicks buttons by name or label, drives virtual keyboard/mouse/touch (`session.Input`), takes screenshots (`yield return session.CaptureAsync("label")`: cameras plus UI Toolkit panels) and writes `Logs/Playtest/<name>/report.txt` with steps, errors and frame times. Add a playtest for every new game flow and look at the screenshots.
-- Run them with the `unity-playtest` skill (batch mode, editor closed) or the Test Runner window.
+- Run them with the `unity-playtest` skill (in the running editor through the Unity CLI, or `unity test` in batch mode when no editor is open) or the Test Runner window.
 - Build with the `unity-build` skill or `Larje.ProjectSetup.Editor.Build.ProjectBuildRunner.RunFromCommandLine` (`-larjeBuildTarget Android|WebGL|StandaloneLinux64`, `-larjeBuildAab`, `-larjeBuildDevelopment`, `-larjeBuildVersion`, `-larjeBuildNumber`, `-larjeWebGLTemplate LarjeTelegram`, `-larjeKeystore` + `-larjeKeyAlias` with `LARJE_KEYSTORE_PASS` / `LARJE_KEY_PASS`). The report is written to `Logs/LarjeBuild.txt`.

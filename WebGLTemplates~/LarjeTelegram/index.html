@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{{ PRODUCT_NAME }}}</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+      #unity-canvas { width: 100%; height: 100%; display: block; background: #000; }
+      #unity-progress { position: absolute; left: 10%; right: 10%; top: 50%; height: 6px; background: #222; border-radius: 3px; }
+      #unity-progress-bar { width: 0; height: 100%; background: #2ea6ff; border-radius: 3px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="unity-progress"><div id="unity-progress-bar"></div></div>
+    <script>
+      var telegram = window.Telegram && window.Telegram.WebApp;
+      if (telegram) {
+        telegram.ready();
+        telegram.expand();
+        if (telegram.disableVerticalSwipes) {
+          telegram.disableVerticalSwipes();
+        }
+      }
+
+      var canvas = document.querySelector("#unity-canvas");
+      var progress = document.querySelector("#unity-progress");
+      var progressBar = document.querySelector("#unity-progress-bar");
+      var config = {
+        dataUrl: "Build/{{{ DATA_FILENAME }}}",
+        frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_THREADS
+        workerUrl: "Build/{{{ WORKER_FILENAME }}}",
+#endif
+#if USE_WASM
+        codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#endif
+#if MEMORY_FILENAME
+        memoryUrl: "Build/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+        symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        devicePixelRatio: window.devicePixelRatio
+      };
+
+      var script = document.createElement("script");
+      script.src = "Build/{{{ LOADER_FILENAME }}}";
+      script.onload = function () {
+        createUnityInstance(canvas, config, function (fraction) {
+          progressBar.style.width = (100 * fraction) + "%";
+        }).then(function (instance) {
+          window.unityInstance = instance;
+          progress.style.display = "none";
+        }).catch(function (message) {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

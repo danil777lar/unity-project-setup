@@ -10,6 +10,9 @@ Instructions for coding agents working on this package.
   - `Steps/`: one `IProjectSetupStep` per area.
   - `Utility/SetupAssets`: load-or-create helpers and `SerializedObject` setters.
   - `Templates~/`: templates for generated project files, with `{{Namespace}}` and `{{ProductName}}` tokens.
+  - `Build/`: `ProjectBuildRunner` and `ProjectBuildOptions` (batch builds).
+  - `Playtest/`: `PlaytestSession`, `PlaytestCapture`, `PlaytestInput` used by generated PlayMode playtests. They are public API of generated projects: keep them backward compatible.
+- `WebGLTemplates~/`: WebGL templates copied into projects on demand (`LarjeTelegram`).
 
 ## Rules for steps
 

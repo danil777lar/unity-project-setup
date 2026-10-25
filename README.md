@@ -51,12 +51,38 @@ Exit codes: `0` done, `1` errors, `2` pending (the generated code must compile f
 | Configs | Save, GameStates, SceneLoader, AppFlow (Splash → Main), TimeScale, Sound, Currency, Items, Purchases, DebugConsole |
 | UI | `Prefabs/UI/MainMenuScreen.prefab` listed in `UIConfig` |
 | Scenes | `Scenes/Splash` and `Scenes/Main` with an EventSystem, added to Build Settings |
-| Project Code | `Scripts/<Namespace>.asmdef`, `ProjectInstaller`, `MenuScreenController`, plus `CLAUDE.md` in the project root |
+| Project Code | `Scripts/<Namespace>.asmdef`, `ProjectInstaller`, `MenuScreenController`, the smoke playtest in `Tests/PlayMode` (`<Namespace>.Playtests`), plus `CLAUDE.md` in the project root |
 | Project Context | `Resources/ProjectContext.prefab` with the core, character and project installers |
 | Validation | Runs `IConfigValidatable` on the generated configs and reports problems as warnings |
 
 All generated content lives under `Assets/_Project`. Existing files are never overwritten. Only references and installer lists are updated.
 
-## Claude Code skill
+## Builds
+
+`Larje.ProjectSetup.Editor.Build.ProjectBuildRunner.RunFromCommandLine` builds the enabled Build Settings scenes:
+
+```bash
+Unity -batchmode -nographics -projectPath <Project> -executeMethod Larje.ProjectSetup.Editor.Build.ProjectBuildRunner.RunFromCommandLine \
+  -larjeBuildTarget Android [-larjeBuildAab] [-larjeBuildMono] [-larjeBuildDevelopment] [-larjeBuildVersion 1.0.0] [-larjeBuildNumber 3] \
+  [-larjeKeystore path -larjeKeyAlias alias] [-larjeWebGLTemplate LarjeTelegram] [-larjeBuildOutput path]
+```
+
+- Android defaults to IL2CPP + ARM64; `-larjeBuildMono` uses Mono + ARMv7. Keystore passwords come from `LARJE_KEYSTORE_PASS` / `LARJE_KEY_PASS`; without a keystore the debug key is used.
+- WebGL uses Gzip with decompression fallback. `-larjeWebGLTemplate LarjeTelegram` copies `WebGLTemplates~/LarjeTelegram` (Telegram WebApp `ready`/`expand`, Adsgram script) into `Assets/WebGLTemplates` and selects it.
+- The summary is written to `Logs/LarjeBuild.txt`; exit code 0 on success.
+
+## Playtests
+
+`Editor/Playtest` contains helpers for PlayMode tests that run in the editor (also in batch mode with graphics):
+
+- `PlaytestSession`: scene loading and waiting, button lookup and clicks by name or label, screenshots, error collection, frame time sampling and `Logs/Playtest/<name>/report.txt`.
+- `PlaytestCapture`: renders all cameras plus screen-space overlay canvases into a PNG (works without a Game view).
+- `PlaytestInput`: virtual keyboard, mouse and touchscreen through Input System state events.
+
+## Claude Code skills
+
+`unity-build` and `unity-playtest` wrap the build runner and the playtests.
+
+
 
 The `unity-new-project` skill (`~/.claude/skills/unity-new-project`) wraps this package. It creates the project in batch mode, writes the manifest from a preset, runs setup until it is done, and makes the first git commit.

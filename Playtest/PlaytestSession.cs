@@ -49,9 +49,9 @@ namespace Larje.ProjectSetup.Editor.Playtest
             yield return null;
         }
 
-        public IEnumerator WaitForScene(string sceneName, float timeout = 20f)
+        public IEnumerator WaitForScene(string sceneName, float timeout = 20f, bool required = true)
         {
-            yield return WaitUntil(() => SceneManager.GetActiveScene().name == sceneName, timeout, $"scene {sceneName}");
+            yield return WaitUntil(() => SceneManager.GetActiveScene().name == sceneName, timeout, $"scene {sceneName}", required);
         }
 
         public IEnumerator WaitSeconds(float seconds)
@@ -64,7 +64,7 @@ namespace Larje.ProjectSetup.Editor.Playtest
             }
         }
 
-        public IEnumerator WaitUntil(Func<bool> condition, float timeout, string description)
+        public IEnumerator WaitUntil(Func<bool> condition, float timeout, string description, bool required = true)
         {
             float end = Time.realtimeSinceStartup + timeout;
             while (!condition() && Time.realtimeSinceStartup < end)
@@ -73,7 +73,14 @@ namespace Larje.ProjectSetup.Editor.Playtest
                 yield return null;
             }
 
-            Step(condition() ? $"Reached {description}" : $"Timed out waiting for {description}");
+            if (condition())
+            {
+                Step($"Reached {description}");
+            }
+            else
+            {
+                Fail($"Timed out after {timeout:F0}s waiting for {description}", required);
+            }
         }
 
         public string Capture(string label)
@@ -96,12 +103,12 @@ namespace Larje.ProjectSetup.Editor.Playtest
             return result;
         }
 
-        public bool Click(string nameOrLabel)
+        public bool Click(string nameOrLabel, bool required = true)
         {
             Button button = FindButtons().FirstOrDefault(x => x.IsInteractable() && Matches(x, nameOrLabel));
             if (button == null)
             {
-                Step($"Button '{nameOrLabel}' not found");
+                Fail($"Interactable button '{nameOrLabel}' not found", required);
                 return false;
             }
 
@@ -114,6 +121,19 @@ namespace Larje.ProjectSetup.Editor.Playtest
         public void Step(string message)
         {
             _steps.Add($"[{Time.realtimeSinceStartup:F1}s] {message}");
+        }
+
+        public void Fail(string message, bool required = true)
+        {
+            if (required)
+            {
+                Step("FAILED: " + message);
+                _errors.Add("Playtest: " + message);
+            }
+            else
+            {
+                Step(message);
+            }
         }
 
         public string WriteReport()

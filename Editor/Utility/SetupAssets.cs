@@ -10,13 +10,24 @@ namespace Larje.ProjectSetup.Editor.Utility
     {
         public static T LoadOrCreate<T>(string path) where T : ScriptableObject
         {
-            return (T)LoadOrCreate(typeof(T), path);
+            return (T)LoadOrCreate(typeof(T), path, out bool _);
+        }
+
+        public static T LoadOrCreate<T>(string path, out bool created) where T : ScriptableObject
+        {
+            return (T)LoadOrCreate(typeof(T), path, out created);
         }
 
         public static ScriptableObject LoadOrCreate(System.Type type, string path)
         {
+            return LoadOrCreate(type, path, out bool _);
+        }
+
+        public static ScriptableObject LoadOrCreate(System.Type type, string path, out bool created)
+        {
             ScriptableObject asset = (ScriptableObject)AssetDatabase.LoadAssetAtPath(path, type);
-            if (asset != null)
+            created = asset == null;
+            if (!created)
             {
                 return asset;
             }
@@ -51,6 +62,57 @@ namespace Larje.ProjectSetup.Editor.Utility
             SerializedObject serialized = new SerializedObject(target);
             GetProperty(serialized, field).objectReferenceValue = reference;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        public static void SetReferenceIfMissing(Object target, string field, Object reference)
+        {
+            SerializedObject serialized = new SerializedObject(target);
+            SerializedProperty property = GetProperty(serialized, field);
+            if (property.objectReferenceValue == null && reference != null)
+            {
+                property.objectReferenceValue = reference;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        public static void AddReferences(Object target, string field, IReadOnlyList<Object> references)
+        {
+            SerializedObject serialized = new SerializedObject(target);
+            SerializedProperty property = GetProperty(serialized, field);
+            HashSet<Object> existing = new HashSet<Object>();
+            for (int i = 0; i < property.arraySize; i++)
+            {
+                existing.Add(property.GetArrayElementAtIndex(i).objectReferenceValue);
+            }
+
+            bool changed = false;
+            foreach (Object reference in references)
+            {
+                if (reference != null && existing.Add(reference))
+                {
+                    property.arraySize++;
+                    property.GetArrayElementAtIndex(property.arraySize - 1).objectReferenceValue = reference;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        public static List<Object> GetReferences(Object target, string field)
+        {
+            SerializedObject serialized = new SerializedObject(target);
+            SerializedProperty property = GetProperty(serialized, field);
+            List<Object> references = new List<Object>();
+            for (int i = 0; i < property.arraySize; i++)
+            {
+                references.Add(property.GetArrayElementAtIndex(i).objectReferenceValue);
+            }
+
+            return references;
         }
 
         public static void SetReferences(Object target, string field, IReadOnlyList<Object> references)

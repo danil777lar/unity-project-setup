@@ -73,7 +73,7 @@ Unity -batchmode -nographics -projectPath <Project> -executeMethod Larje.Project
 
 ## Playtests
 
-`Editor/Playtest` contains helpers for PlayMode tests that run in the editor (also in batch mode with graphics):
+`Playtest/` (assembly `Larje.ProjectSetup.Playtest`, compiled only in the editor through the `UNITY_EDITOR` constraint, never in players) contains helpers for PlayMode tests that run in the editor (also in batch mode with graphics). The generated `<Namespace>.Playtests` assembly references it and has no platform restriction: an assembly limited to the Editor platform is treated as EditMode tests and is skipped by PlayMode runs.
 
 - `PlaytestSession`: scene loading and waiting, button lookup and clicks by name or label, screenshots, error collection, frame time sampling and `Logs/Playtest/<name>/report.txt`.
 - `PlaytestCapture`: renders all cameras plus screen-space overlay canvases into a PNG (works without a Game view).

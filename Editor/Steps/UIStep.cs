@@ -44,7 +44,9 @@ namespace Larje.ProjectSetup.Editor.Steps
         {
             SetupAssets.EnsureFolder(ProjectSetupContext.UI_PREFABS);
 
+            int uiLayer = LayerMask.NameToLayer("UI");
             GameObject root = new GameObject("MainMenuScreen", typeof(RectTransform));
+            root.layer = uiLayer;
             Canvas canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
@@ -60,6 +62,7 @@ namespace Larje.ProjectSetup.Editor.Steps
             SetupAssets.SetReference(screen, "id", id);
 
             GameObject background = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            background.layer = uiLayer;
             background.transform.SetParent(root.transform, false);
             RectTransform rect = (RectTransform)background.transform;
             rect.anchorMin = Vector2.zero;

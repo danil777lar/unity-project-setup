@@ -50,34 +50,43 @@ namespace Larje.ProjectSetup.Editor.Build
             }
 
             ApplyVersion(options);
-            switch (options.Target)
+            PlayerSettingsSnapshot snapshot = new PlayerSettingsSnapshot(namedTarget);
+            try
             {
-                case BuildTarget.Android:
-                    ConfigureAndroid(options, namedTarget);
-                    break;
-                case BuildTarget.WebGL:
-                    ConfigureWebGL(options);
-                    break;
+                switch (options.Target)
+                {
+                    case BuildTarget.Android:
+                        ConfigureAndroid(options, namedTarget);
+                        break;
+                    case BuildTarget.WebGL:
+                        ConfigureWebGL(options);
+                        break;
+                }
+
+                string[] scenes = EditorBuildSettings.scenes.Where(x => x.enabled).Select(x => x.path).ToArray();
+                if (scenes.Length == 0)
+                {
+                    throw new InvalidOperationException("No enabled scenes in Build Settings.");
+                }
+
+                BuildPlayerOptions playerOptions = new BuildPlayerOptions
+                {
+                    scenes = scenes,
+                    target = options.Target,
+                    targetGroup = group,
+                    locationPathName = GetOutputPath(options),
+                    options = options.Development ? BuildOptions.Development : BuildOptions.None
+                };
+
+                BuildReport report = BuildPipeline.BuildPlayer(playerOptions);
+                WriteReport(report, playerOptions.locationPathName);
+                return report;
             }
-
-            string[] scenes = EditorBuildSettings.scenes.Where(x => x.enabled).Select(x => x.path).ToArray();
-            if (scenes.Length == 0)
+            finally
             {
-                throw new InvalidOperationException("No enabled scenes in Build Settings.");
+                snapshot.Restore();
+                AssetDatabase.SaveAssets();
             }
-
-            BuildPlayerOptions playerOptions = new BuildPlayerOptions
-            {
-                scenes = scenes,
-                target = options.Target,
-                targetGroup = group,
-                locationPathName = GetOutputPath(options),
-                options = options.Development ? BuildOptions.Development : BuildOptions.None
-            };
-
-            BuildReport report = BuildPipeline.BuildPlayer(playerOptions);
-            WriteReport(report, playerOptions.locationPathName);
-            return report;
         }
 
         private static void ApplyVersion(ProjectBuildOptions options)
@@ -200,6 +209,46 @@ namespace Larje.ProjectSetup.Editor.Build
             foreach (string directory in Directory.GetDirectories(source))
             {
                 CopyDirectory(directory, Path.Combine(target, Path.GetFileName(directory)));
+            }
+        }
+
+        private sealed class PlayerSettingsSnapshot
+        {
+            private readonly bool _useCustomKeystore;
+            private readonly bool _webGLDecompressionFallback;
+            private readonly ScriptingImplementation _scriptingBackend;
+            private readonly AndroidArchitecture _androidArchitectures;
+            private readonly WebGLCompressionFormat _webGLCompression;
+            private readonly NamedBuildTarget _target;
+            private readonly string _keystoreName;
+            private readonly string _keyaliasName;
+            private readonly string _webGLTemplate;
+
+            public PlayerSettingsSnapshot(NamedBuildTarget target)
+            {
+                _target = target;
+                _scriptingBackend = PlayerSettings.GetScriptingBackend(target);
+                _androidArchitectures = PlayerSettings.Android.targetArchitectures;
+                _useCustomKeystore = PlayerSettings.Android.useCustomKeystore;
+                _keystoreName = PlayerSettings.Android.keystoreName;
+                _keyaliasName = PlayerSettings.Android.keyaliasName;
+                _webGLCompression = PlayerSettings.WebGL.compressionFormat;
+                _webGLDecompressionFallback = PlayerSettings.WebGL.decompressionFallback;
+                _webGLTemplate = PlayerSettings.WebGL.template;
+            }
+
+            public void Restore()
+            {
+                PlayerSettings.SetScriptingBackend(_target, _scriptingBackend);
+                PlayerSettings.Android.targetArchitectures = _androidArchitectures;
+                PlayerSettings.Android.useCustomKeystore = _useCustomKeystore;
+                PlayerSettings.Android.keystoreName = _keystoreName;
+                PlayerSettings.Android.keyaliasName = _keyaliasName;
+                PlayerSettings.Android.keystorePass = string.Empty;
+                PlayerSettings.Android.keyaliasPass = string.Empty;
+                PlayerSettings.WebGL.compressionFormat = _webGLCompression;
+                PlayerSettings.WebGL.decompressionFallback = _webGLDecompressionFallback;
+                PlayerSettings.WebGL.template = _webGLTemplate;
             }
         }
     }

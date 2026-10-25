@@ -4,13 +4,13 @@
     "references": [
         "{{Namespace}}",
         "Larje.Core",
-        "Larje.ProjectSetup.Editor",
+        "Larje.ProjectSetup.Playtest",
         "UniTask",
+        "Zenject",
         "Unity.InputSystem",
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEngine.TestRunner"
     ],
-    "includePlatforms": ["Editor"],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,

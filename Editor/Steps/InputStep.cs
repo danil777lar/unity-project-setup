@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Larje.Core.Input;
@@ -15,6 +16,7 @@ namespace Larje.ProjectSetup.Editor.Steps
 
         private const string TEMPLATE_PATH = "Packages/com.unity.inputsystem/InputSystem/Editor/ProjectWideActions/ProjectWideActionsTemplate.json";
         private const string TEMPLATE_NAME = "\"name\": \"ProjectWideActionsTemplate\"";
+        private const string UNITY_DEFAULT_ACTIONS_PATH = "Assets/InputSystem_Actions.inputactions";
 
         private static readonly string[] Maps = { "Player", "UI" };
 
@@ -31,15 +33,18 @@ namespace Larje.ProjectSetup.Editor.Steps
                 return;
             }
 
-            InputSystem.actions = actions;
+            if (InputSystem.actions == null || AssetDatabase.GetAssetPath(InputSystem.actions) == UNITY_DEFAULT_ACTIONS_PATH)
+            {
+                InputSystem.actions = actions;
+            }
 
             InputConfig config = SetupAssets.LoadOrCreate<InputConfig>(INPUT_CONFIG_PATH);
-            SetupAssets.SetReference(config, "actions", actions);
-            SetMaps(config);
-            SetupAssets.SetReference(config, "back", FindReference("UI/Cancel"));
-            SetupAssets.SetReference(config, "move", FindReference("Player/Move"));
-            SetupAssets.SetReference(config, "run", FindReference("Player/Sprint"));
-            SetupAssets.SetReference(config, "pointer", FindReference("UI/Point"));
+            SetupAssets.SetReferenceIfMissing(config, "actions", actions);
+            AddMissingMaps(config);
+            SetupAssets.SetReferenceIfMissing(config, "back", FindReference("UI/Cancel"));
+            SetupAssets.SetReferenceIfMissing(config, "move", FindReference("Player/Move"));
+            SetupAssets.SetReferenceIfMissing(config, "run", FindReference("Player/Sprint"));
+            SetupAssets.SetReferenceIfMissing(config, "pointer", FindReference("UI/Point"));
 
             SetupAssets.LoadOrCreate<PointerControlConfig>(POINTER_CONFIG_PATH);
             context.Report.Info(Name, "Input actions (Player, UI) and InputConfig are ready");
@@ -71,15 +76,21 @@ namespace Larje.ProjectSetup.Editor.Steps
             AssetDatabase.ImportAsset(ACTIONS_PATH, ImportAssetOptions.ForceSynchronousImport);
         }
 
-        private void SetMaps(InputConfig config)
+        private void AddMissingMaps(InputConfig config)
         {
             SerializedObject serialized = new SerializedObject(config);
             SerializedProperty maps = SetupAssets.GetProperty(serialized, "maps");
-            maps.arraySize = Maps.Length;
-            for (int i = 0; i < Maps.Length; i++)
+            HashSet<string> existing = new HashSet<string>();
+            for (int i = 0; i < maps.arraySize; i++)
             {
-                SerializedProperty map = maps.GetArrayElementAtIndex(i);
-                map.FindPropertyRelative("Name").stringValue = Maps[i];
+                existing.Add(maps.GetArrayElementAtIndex(i).FindPropertyRelative("Name").stringValue);
+            }
+
+            foreach (string mapName in Maps.Where(x => !existing.Contains(x)))
+            {
+                maps.arraySize++;
+                SerializedProperty map = maps.GetArrayElementAtIndex(maps.arraySize - 1);
+                map.FindPropertyRelative("Name").stringValue = mapName;
                 map.FindPropertyRelative("EnabledByDefault").boolValue = true;
             }
 

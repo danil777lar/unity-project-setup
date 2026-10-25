@@ -49,32 +49,35 @@ namespace Larje.ProjectSetup.Editor.Steps
             foreach (string state in IdsStep.GameStates)
             {
                 string field = char.ToLowerInvariant(state[0]) + state.Substring(1);
-                SetupAssets.SetReference(config, field, SetupAssets.LoadOrCreateId<GameStateId>(state));
+                SetupAssets.SetReferenceIfMissing(config, field, SetupAssets.LoadOrCreateId<GameStateId>(state));
             }
         }
 
         private void SetupAppFlow()
         {
-            AppFlowConfig config = CreateConfig<AppFlowConfig>();
-            SetupAssets.SetString(config, "splashScene", ProjectSetupContext.SPLASH_SCENE);
-            SetupAssets.SetString(config, "menuScene", ProjectSetupContext.MAIN_SCENE);
-            SetupAssets.SetFloat(config, "splashDuration", 1.5f);
+            AppFlowConfig config = SetupAssets.LoadOrCreate<AppFlowConfig>(GetPath<AppFlowConfig>(), out bool created);
+            if (created)
+            {
+                SetupAssets.SetString(config, "splashScene", ProjectSetupContext.SPLASH_SCENE);
+                SetupAssets.SetString(config, "menuScene", ProjectSetupContext.MAIN_SCENE);
+                SetupAssets.SetFloat(config, "splashDuration", 1.5f);
+            }
         }
 
         private void SetupSound()
         {
             SoundConfig config = CreateConfig<SoundConfig>();
             SoundChannelId[] channels = IdsStep.SoundChannels.Select(x => SetupAssets.LoadOrCreateId<SoundChannelId>(x)).ToArray();
-            SetupAssets.SetReferences(config, "channels", channels);
-            SetupAssets.SetReference(config, "defaultChannel", channels.Last());
+            SetupAssets.AddReferences(config, "channels", channels);
+            SetupAssets.SetReferenceIfMissing(config, "defaultChannel", channels.Last());
         }
 
         private void SetupCurrency()
         {
             CurrencyConfig config = CreateConfig<CurrencyConfig>();
             CurrencyPlacementId placement = SetupAssets.LoadOrCreateId<CurrencyPlacementId>(IdsStep.DEFAULT_PLACEMENT);
-            SetupAssets.SetReference(config, "defaultPlacement", placement);
-            SetupAssets.SetReferences(config, "placements", new Object[] { placement });
+            SetupAssets.SetReferenceIfMissing(config, "defaultPlacement", placement);
+            SetupAssets.AddReferences(config, "placements", new Object[] { placement });
 
             SerializedObject serialized = new SerializedObject(config);
             SerializedProperty currencies = SetupAssets.GetProperty(serialized, "currencies");

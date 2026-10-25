@@ -11,12 +11,12 @@ Instructions for coding agents working on this package.
   - `Utility/SetupAssets`: load-or-create helpers and `SerializedObject` setters.
   - `Templates~/`: templates for generated project files, with `{{Namespace}}` and `{{ProductName}}` tokens.
   - `Build/`: `ProjectBuildRunner` and `ProjectBuildOptions` (batch builds).
-  - `Playtest/`: `PlaytestSession`, `PlaytestCapture`, `PlaytestInput` used by generated PlayMode playtests. They are public API of generated projects: keep them backward compatible.
+- `Playtest/`: `Larje.ProjectSetup.Playtest` (any platform, `UNITY_EDITOR` constraint, namespace `Larje.ProjectSetup.Editor.Playtest` kept for compatibility): `PlaytestSession`, `PlaytestCapture`, `PlaytestInput` used by generated PlayMode playtests. They are public API of generated projects: keep them backward compatible and free of `UnityEditor` APIs. Do not move them back into the editor assembly: PlayMode test assemblies cannot reference editor-only assemblies.
 - `WebGLTemplates~/`: WebGL templates copied into projects on demand (`LarjeTelegram`).
 
 ## Rules for steps
 
-- Every step must be idempotent. Load existing assets first, never overwrite files the user may have edited, and only re-assign references and lists.
+- Every step must be idempotent and must keep the user's changes. Load existing assets first and never overwrite files. Fill only empty references (`SetupAssets.SetReferenceIfMissing`), add only missing list entries (`SetupAssets.AddReferences`), and write plain values only when the asset was just created (`LoadOrCreate(path, out bool created)`). Never remove or reorder entries the user added, for example extra installers in `ProjectContext`.
 - Create and change assets only through the Unity API (`AssetDatabase`, `PrefabUtility`, `EditorSceneManager`, `SerializedObject`), never as text.
 - Set private serialized fields through `SetupAssets` using the field name. If a field is renamed in another package, update it here.
 - Types from optional packages, or from code generated in the same run, are resolved with `Type.GetType`. When such a type is missing, report `Pending` so the runner exits with code 2 and is run again.
@@ -32,7 +32,7 @@ Instructions for coding agents working on this package.
 - Do not name variables `value` except in property setters.
 - Make private methods `static` only when a static context requires it.
 - Order members as: constants, static fields, serialized fields, fields, properties, events, methods, nested enums, nested classes. Within each group order by access: public, protected, internal, private.
-- Private fields use `_camelCase`, constants use `UPPER_SNAKE_CASE`.
+- Private non-serialized fields use `_camelCase`, constants use `UPPER_SNAKE_CASE`. `[SerializeField]` fields follow the style already used in the package (mostly `camelCase`); never rename an existing serialized field without `[FormerlySerializedAs]`, because assets and `com.larje.projectsetup` reference fields by name.
 - Serialized fields: never use `[Tooltip]`. Group related fields with `[Header]` and avoid single-field headers.
 
 ## Architecture rules

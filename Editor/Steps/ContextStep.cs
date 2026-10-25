@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Larje.Core.Audio;
 using Larje.Core.Debugging;
 using Larje.Core.Economy;
@@ -29,44 +30,35 @@ namespace Larje.ProjectSetup.Editor.Steps
 
         public void Run(ProjectSetupContext context)
         {
-            List<Object> installers = new List<Object> { CreateCoreInstaller() };
-
-            if (context.Options.Character)
-            {
-                ScriptableObject character = CreateCharacterInstaller(context);
-                if (character != null)
-                {
-                    installers.Add(character);
-                }
-            }
-
+            ScriptableObject core = CreateCoreInstaller();
+            ScriptableObject character = context.Options.Character ? CreateCharacterInstaller(context) : null;
             ScriptableObject project = CreateProjectInstaller(context);
-            if (project != null)
-            {
-                installers.Add(project);
-            }
 
-            WriteProjectContext(installers);
-            context.Report.Info(Name, $"{CONTEXT_PATH} uses {installers.Count} installer(s)");
+            int count = WriteProjectContext(core, character, project);
+            context.Report.Info(Name, $"{CONTEXT_PATH} uses {count} installer(s)");
         }
 
         private LarjeCoreInstaller CreateCoreInstaller()
         {
-            LarjeCoreInstaller installer = SetupAssets.LoadOrCreate<LarjeCoreInstaller>(ProjectSetupContext.INSTALLERS + "/LarjeCoreInstaller.asset");
-            SetupAssets.SetReference(installer, "saves", Load<SaveConfig>());
-            SetupAssets.SetReference(installer, "gameStates", Load<GameStatesConfig>());
-            SetupAssets.SetReference(installer, "sceneLoader", Load<SceneLoaderConfig>());
-            SetupAssets.SetReference(installer, "appFlow", Load<AppFlowConfig>());
-            SetupAssets.SetReference(installer, "timeScale", Load<TimeScaleConfig>());
-            SetupAssets.SetReference(installer, "input", AssetDatabase.LoadAssetAtPath<InputConfig>(InputStep.INPUT_CONFIG_PATH));
-            SetupAssets.SetReference(installer, "pointerControl", AssetDatabase.LoadAssetAtPath<PointerControlConfig>(InputStep.POINTER_CONFIG_PATH));
-            SetupAssets.SetReference(installer, "ui", AssetDatabase.LoadAssetAtPath<UIConfig>(UIStep.UI_CONFIG_PATH));
-            SetupAssets.SetReference(installer, "sound", Load<SoundConfig>());
-            SetupAssets.SetReference(installer, "currency", Load<CurrencyConfig>());
-            SetupAssets.SetReference(installer, "items", Load<ItemsConfig>());
-            SetupAssets.SetReference(installer, "purchases", Load<PurchasesConfig>());
-            SetupAssets.SetReference(installer, "debugConsole", Load<DebugConsoleConfig>());
-            SetupAssets.SetBool(installer, "bindSimulatedMonetization", true);
+            LarjeCoreInstaller installer = SetupAssets.LoadOrCreate<LarjeCoreInstaller>(ProjectSetupContext.INSTALLERS + "/LarjeCoreInstaller.asset", out bool created);
+            SetupAssets.SetReferenceIfMissing(installer, "saves", Load<SaveConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "gameStates", Load<GameStatesConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "sceneLoader", Load<SceneLoaderConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "appFlow", Load<AppFlowConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "timeScale", Load<TimeScaleConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "input", AssetDatabase.LoadAssetAtPath<InputConfig>(InputStep.INPUT_CONFIG_PATH));
+            SetupAssets.SetReferenceIfMissing(installer, "pointerControl", AssetDatabase.LoadAssetAtPath<PointerControlConfig>(InputStep.POINTER_CONFIG_PATH));
+            SetupAssets.SetReferenceIfMissing(installer, "ui", AssetDatabase.LoadAssetAtPath<UIConfig>(UIStep.UI_CONFIG_PATH));
+            SetupAssets.SetReferenceIfMissing(installer, "sound", Load<SoundConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "currency", Load<CurrencyConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "items", Load<ItemsConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "purchases", Load<PurchasesConfig>());
+            SetupAssets.SetReferenceIfMissing(installer, "debugConsole", Load<DebugConsoleConfig>());
+            if (created)
+            {
+                SetupAssets.SetBool(installer, "bindSimulatedMonetization", true);
+            }
+
             return installer;
         }
 
@@ -82,7 +74,7 @@ namespace Larje.ProjectSetup.Editor.Steps
 
             ScriptableObject cursor = SetupAssets.LoadOrCreate(cursorType, ProjectSetupContext.CONFIGS + "/CursorConfig.asset");
             ScriptableObject installer = SetupAssets.LoadOrCreate(installerType, ProjectSetupContext.INSTALLERS + "/LarjeCharacterInstaller.asset");
-            SetupAssets.SetReference(installer, "cursor", cursor);
+            SetupAssets.SetReferenceIfMissing(installer, "cursor", cursor);
             return installer;
         }
 
@@ -97,11 +89,11 @@ namespace Larje.ProjectSetup.Editor.Steps
             }
 
             ScriptableObject installer = SetupAssets.LoadOrCreate(installerType, ProjectSetupContext.INSTALLERS + "/ProjectInstaller.asset");
-            SetupAssets.SetReference(installer, "_mainMenuScreen", SetupAssets.LoadOrCreateId<UIScreenId>(IdsStep.MAIN_MENU_SCREEN));
+            SetupAssets.SetReferenceIfMissing(installer, "_mainMenuScreen", SetupAssets.LoadOrCreateId<UIScreenId>(IdsStep.MAIN_MENU_SCREEN));
             return installer;
         }
 
-        private void WriteProjectContext(List<Object> installers)
+        private int WriteProjectContext(Object core, Object character, Object project)
         {
             SetupAssets.EnsureFolder(ProjectSetupContext.RESOURCES);
             bool exists = AssetDatabase.LoadAssetAtPath<GameObject>(CONTEXT_PATH) != null;
@@ -113,6 +105,7 @@ namespace Larje.ProjectSetup.Editor.Steps
                 projectContext = root.AddComponent<ProjectContext>();
             }
 
+            List<Object> installers = MergeInstallers(SetupAssets.GetReferences(projectContext, "_scriptableObjectInstallers"), core, character, project);
             SetupAssets.SetReferences(projectContext, "_scriptableObjectInstallers", installers);
             PrefabUtility.SaveAsPrefabAsset(root, CONTEXT_PATH);
 
@@ -124,6 +117,29 @@ namespace Larje.ProjectSetup.Editor.Steps
             {
                 Object.DestroyImmediate(root);
             }
+
+            return installers.Count;
+        }
+
+        private List<Object> MergeInstallers(List<Object> existing, Object core, Object character, Object project)
+        {
+            List<Object> installers = existing.Where(x => x != null).Distinct().ToList();
+            if (!installers.Contains(core))
+            {
+                installers.Insert(0, core);
+            }
+
+            if (character != null && !installers.Contains(character))
+            {
+                installers.Insert(installers.IndexOf(core) + 1, character);
+            }
+
+            if (project != null && !installers.Contains(project))
+            {
+                installers.Add(project);
+            }
+
+            return installers;
         }
 
         private T Load<T>() where T : ScriptableObject

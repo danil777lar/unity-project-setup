@@ -26,15 +26,26 @@ namespace Larje.ProjectSetup.Editor.Steps
                 context.Report.Info(Name, "Created URP asset " + PIPELINE_PATH);
             }
 
-            GraphicsSettings.defaultRenderPipeline = pipeline;
+            if (GraphicsSettings.defaultRenderPipeline == null)
+            {
+                GraphicsSettings.defaultRenderPipeline = pipeline;
+            }
+
             int current = QualitySettings.GetQualityLevel();
             for (int i = 0; i < QualitySettings.count; i++)
             {
                 QualitySettings.SetQualityLevel(i, false);
-                QualitySettings.renderPipeline = pipeline;
+                if (QualitySettings.renderPipeline == null)
+                {
+                    QualitySettings.renderPipeline = GraphicsSettings.defaultRenderPipeline;
+                }
             }
 
             QualitySettings.SetQualityLevel(current, false);
+            if (!(GraphicsSettings.defaultRenderPipeline is UniversalRenderPipelineAsset))
+            {
+                context.Report.Warning(Name, "Default render pipeline is not URP: " + GraphicsSettings.defaultRenderPipeline.name);
+            }
         }
     }
 }

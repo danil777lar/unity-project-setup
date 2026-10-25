@@ -25,34 +25,35 @@ namespace Larje.ProjectSetup.Editor.Playtest
             texture.Create();
             List<OverlayState> overlays = new List<OverlayState>();
             Camera uiCamera = null;
+            Camera top = null;
+            int topCullingMask = 0;
             try
             {
-                Camera[] cameras = Camera.allCameras.Where(x => x.enabled && x.targetTexture == null).OrderBy(x => x.depth).ToArray();
-                uiCamera = CreateUiCamera();
-                uiCamera.targetTexture = texture;
+                List<Camera> cameras = Camera.allCameras.Where(x => x.enabled && x.targetTexture == null).OrderBy(x => x.depth).ToList();
+                if (cameras.Count == 0)
+                {
+                    uiCamera = CreateUiCamera();
+                    cameras.Add(uiCamera);
+                }
+
+                top = cameras[cameras.Count - 1];
+                topCullingMask = top.cullingMask;
                 foreach (Canvas canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
                 {
                     if (canvas.isRootCanvas && canvas.renderMode == RenderMode.ScreenSpaceOverlay && canvas.isActiveAndEnabled)
                     {
                         overlays.Add(new OverlayState(canvas, canvas.planeDistance));
                         canvas.renderMode = RenderMode.ScreenSpaceCamera;
-                        canvas.worldCamera = uiCamera;
-                        canvas.planeDistance = 1f;
+                        canvas.worldCamera = top;
+                        canvas.planeDistance = top.nearClipPlane + 0.05f;
+                        top.cullingMask |= GetLayerMask(canvas);
                     }
                 }
 
                 Canvas.ForceUpdateCanvases();
-                bool cleared = false;
-                foreach (Camera camera in cameras)
+                for (int i = 0; i < cameras.Count; i++)
                 {
-                    RenderInto(camera, texture, !cleared);
-                    cleared = true;
-                }
-
-                if (overlays.Count > 0)
-                {
-                    uiCamera.clearFlags = cleared ? CameraClearFlags.Depth : CameraClearFlags.SolidColor;
-                    RenderInto(uiCamera, texture, false);
+                    RenderInto(cameras[i], texture, i == 0);
                 }
 
                 return Save(texture, name);
@@ -62,6 +63,11 @@ namespace Larje.ProjectSetup.Editor.Playtest
                 foreach (OverlayState overlay in overlays)
                 {
                     overlay.Restore();
+                }
+
+                if (top != null)
+                {
+                    top.cullingMask = topCullingMask;
                 }
 
                 if (uiCamera != null)
@@ -79,13 +85,24 @@ namespace Larje.ProjectSetup.Editor.Playtest
             GameObject cameraObject = new GameObject("PlaytestUiCamera");
             Camera camera = cameraObject.AddComponent<Camera>();
             camera.orthographic = true;
-            camera.cullingMask = 1 << LayerMask.NameToLayer("UI");
+            camera.cullingMask = 0;
+            camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = Color.black;
             camera.nearClipPlane = 0.1f;
             camera.farClipPlane = 10f;
-            camera.depth = 1000f;
             camera.enabled = false;
             return camera;
+        }
+
+        private int GetLayerMask(Canvas canvas)
+        {
+            int mask = 0;
+            foreach (Transform child in canvas.GetComponentsInChildren<Transform>(true))
+            {
+                mask |= 1 << child.gameObject.layer;
+            }
+
+            return mask;
         }
 
         private void RenderInto(Camera camera, RenderTexture texture, bool first)

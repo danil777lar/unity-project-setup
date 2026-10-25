@@ -1,4 +1,4 @@
-using Larje.Core.UI;
+using Larje.UI;
 using UnityEngine;
 using Zenject;
 

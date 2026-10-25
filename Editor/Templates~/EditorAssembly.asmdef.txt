@@ -4,6 +4,7 @@
     "references": [
         "{{Namespace}}",
         "Larje.Core",
+        "Larje.UI",
         "Larje.Core.Editor",
         "UniTask",
         "Zenject",

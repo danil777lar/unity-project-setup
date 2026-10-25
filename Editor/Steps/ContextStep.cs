@@ -9,9 +9,10 @@ using Larje.Core.Input;
 using Larje.Core.Monetization;
 using Larje.Core.Saves;
 using Larje.Core.TimeScale;
-using Larje.Core.UI;
 using Larje.Core.Zenject;
 using Larje.ProjectSetup.Editor.Utility;
+using Larje.UI;
+using Larje.UI.Zenject;
 using UnityEditor;
 using UnityEngine;
 using Zenject;
@@ -31,10 +32,11 @@ namespace Larje.ProjectSetup.Editor.Steps
         public void Run(ProjectSetupContext context)
         {
             ScriptableObject core = CreateCoreInstaller();
+            ScriptableObject ui = CreateUIInstaller();
             ScriptableObject character = context.Options.Character ? CreateCharacterInstaller(context) : null;
             ScriptableObject project = CreateProjectInstaller(context);
 
-            int count = WriteProjectContext(core, character, project);
+            int count = WriteProjectContext(new Object[] { core, ui, character }, project);
             context.Report.Info(Name, $"{CONTEXT_PATH} uses {count} installer(s)");
         }
 
@@ -48,7 +50,6 @@ namespace Larje.ProjectSetup.Editor.Steps
             SetupAssets.SetReferenceIfMissing(installer, "timeScale", Load<TimeScaleConfig>());
             SetupAssets.SetReferenceIfMissing(installer, "input", AssetDatabase.LoadAssetAtPath<InputConfig>(InputStep.INPUT_CONFIG_PATH));
             SetupAssets.SetReferenceIfMissing(installer, "pointerControl", AssetDatabase.LoadAssetAtPath<PointerControlConfig>(InputStep.POINTER_CONFIG_PATH));
-            SetupAssets.SetReferenceIfMissing(installer, "ui", AssetDatabase.LoadAssetAtPath<UIConfig>(UIStep.UI_CONFIG_PATH));
             SetupAssets.SetReferenceIfMissing(installer, "sound", Load<SoundConfig>());
             SetupAssets.SetReferenceIfMissing(installer, "currency", Load<CurrencyConfig>());
             SetupAssets.SetReferenceIfMissing(installer, "items", Load<ItemsConfig>());
@@ -59,6 +60,13 @@ namespace Larje.ProjectSetup.Editor.Steps
                 SetupAssets.SetBool(installer, "bindSimulatedMonetization", true);
             }
 
+            return installer;
+        }
+
+        private LarjeUIInstaller CreateUIInstaller()
+        {
+            LarjeUIInstaller installer = SetupAssets.LoadOrCreate<LarjeUIInstaller>(ProjectSetupContext.INSTALLERS + "/LarjeUIInstaller.asset");
+            SetupAssets.SetReferenceIfMissing(installer, "ui", AssetDatabase.LoadAssetAtPath<UIConfig>(UIStep.UI_CONFIG_PATH));
             return installer;
         }
 
@@ -93,7 +101,7 @@ namespace Larje.ProjectSetup.Editor.Steps
             return installer;
         }
 
-        private int WriteProjectContext(Object core, Object character, Object project)
+        private int WriteProjectContext(IReadOnlyList<Object> leading, Object project)
         {
             SetupAssets.EnsureFolder(ProjectSetupContext.RESOURCES);
             bool exists = AssetDatabase.LoadAssetAtPath<GameObject>(CONTEXT_PATH) != null;
@@ -105,7 +113,7 @@ namespace Larje.ProjectSetup.Editor.Steps
                 projectContext = root.AddComponent<ProjectContext>();
             }
 
-            List<Object> installers = MergeInstallers(SetupAssets.GetReferences(projectContext, "_scriptableObjectInstallers"), core, character, project);
+            List<Object> installers = MergeInstallers(SetupAssets.GetReferences(projectContext, "_scriptableObjectInstallers"), leading, project);
             SetupAssets.SetReferences(projectContext, "_scriptableObjectInstallers", installers);
             PrefabUtility.SaveAsPrefabAsset(root, CONTEXT_PATH);
 
@@ -121,17 +129,21 @@ namespace Larje.ProjectSetup.Editor.Steps
             return installers.Count;
         }
 
-        private List<Object> MergeInstallers(List<Object> existing, Object core, Object character, Object project)
+        private List<Object> MergeInstallers(List<Object> existing, IReadOnlyList<Object> leading, Object project)
         {
             List<Object> installers = existing.Where(x => x != null).Distinct().ToList();
-            if (!installers.Contains(core))
+            int index = 0;
+            foreach (Object installer in leading.Where(x => x != null))
             {
-                installers.Insert(0, core);
-            }
-
-            if (character != null && !installers.Contains(character))
-            {
-                installers.Insert(installers.IndexOf(core) + 1, character);
+                if (installers.Contains(installer))
+                {
+                    index = installers.IndexOf(installer) + 1;
+                }
+                else
+                {
+                    installers.Insert(index, installer);
+                    index++;
+                }
             }
 
             if (project != null && !installers.Contains(project))

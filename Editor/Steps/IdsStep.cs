@@ -1,8 +1,8 @@
 using Larje.Core.Audio;
 using Larje.Core.Economy;
 using Larje.Core.GameFlow;
-using Larje.Core.UI;
 using Larje.ProjectSetup.Editor.Utility;
+using Larje.UI;
 
 namespace Larje.ProjectSetup.Editor.Steps
 {

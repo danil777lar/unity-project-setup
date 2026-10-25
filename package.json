@@ -11,10 +11,16 @@
   },
   "dependencies": {
     "com.larje.core": "0.1.0",
+    "com.larje.ui": "0.1.0",
     "com.larje.zenject": "9.2.0",
     "com.unity.inputsystem": "1.11.0",
     "com.unity.render-pipelines.universal": "17.0.0",
     "com.unity.ugui": "2.0.0"
   },
-  "keywords": ["larje", "setup", "bootstrap", "template"]
+  "keywords": [
+    "larje",
+    "setup",
+    "bootstrap",
+    "template"
+  ]
 }

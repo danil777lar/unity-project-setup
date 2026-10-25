@@ -4,6 +4,8 @@
     "references": [
         "Larje.Core",
         "Larje.Core.Zenject",
+        "Larje.UI",
+        "Larje.UI.Zenject",
         "Zenject",
         "Unity.InputSystem",
         "Unity.RenderPipelines.Universal.Runtime",

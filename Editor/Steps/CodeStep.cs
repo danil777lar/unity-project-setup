@@ -67,7 +67,7 @@ namespace Larje.ProjectSetup.Editor.Steps
 
         private string CreateAssemblyDefinition(ProjectSetupOptions options)
         {
-            List<string> references = new List<string> { "Larje.Core", "UniTask", "Zenject", "Unity.InputSystem" };
+            List<string> references = new List<string> { "Larje.Core", "Larje.UI", "UniTask", "Zenject", "Unity.InputSystem" };
             if (options.Character)
             {
                 references.Add("Larje.Character");

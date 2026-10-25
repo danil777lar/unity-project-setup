@@ -7,6 +7,7 @@
 ```json
 "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.10",
 "com.larje.core": "https://github.com/danil777lar/unity-gameplay-core-services.git",
+"com.larje.ui": "https://github.com/danil777lar/unity-ui-framework.git",
 "com.larje.zenject": "https://github.com/danil777lar/unity-zenject-upm.git#9.2.0",
 "com.larje.projectsetup": "https://github.com/danil777lar/unity-project-setup.git"
 ```
@@ -52,7 +53,7 @@ Exit codes: `0` done, `1` errors, `2` pending (the generated code must compile f
 | UI | `Prefabs/UI/MainMenuScreen.prefab` listed in `UIConfig` |
 | Scenes | `Scenes/Splash` and `Scenes/Main` with an EventSystem, added to Build Settings |
 | Project Code | `Scripts/<Namespace>.asmdef`, `ProjectInstaller`, `MenuScreenController`, the smoke playtest in `Tests/PlayMode` (`<Namespace>.Playtests`), plus `CLAUDE.md` in the project root |
-| Project Context | `Resources/ProjectContext.prefab` with the core, character and project installers |
+| Project Context | `Resources/ProjectContext.prefab` with the core, UI, character and project installers |
 | Validation | Runs `IConfigValidatable` on the generated configs and reports problems as warnings |
 
 All generated content lives under `Assets/_Project`. Existing files are never overwritten. Only references and installer lists are updated.

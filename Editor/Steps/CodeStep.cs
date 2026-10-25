@@ -25,6 +25,7 @@ namespace Larje.ProjectSetup.Editor.Steps
             created |= WriteIfMissing($"{scripts}/{context.Options.RootNamespace}.asmdef", CreateAssemblyDefinition(context.Options));
             created |= WriteTemplate(templates, "ProjectInstaller.cs.txt", $"{scripts}/Installers/ProjectInstaller.cs", tokens);
             created |= WriteTemplate(templates, "MenuScreenController.cs.txt", $"{scripts}/Flow/MenuScreenController.cs", tokens);
+            created |= WriteTemplate(templates, "EditorAssembly.asmdef.txt", $"{ProjectSetupContext.ROOT}/Editor/{context.Options.RootNamespace}.Editor.asmdef", tokens);
             created |= WriteTemplate(templates, "Playtests.asmdef.txt", $"{ProjectSetupContext.ROOT}/Tests/PlayMode/{context.Options.RootNamespace}.Playtests.asmdef", tokens);
             created |= WriteTemplate(templates, "SmokePlaytest.cs.txt", $"{ProjectSetupContext.ROOT}/Tests/PlayMode/SmokePlaytest.cs", tokens);
             WriteTemplate(templates, "CLAUDE.md.txt", "CLAUDE.md", tokens);

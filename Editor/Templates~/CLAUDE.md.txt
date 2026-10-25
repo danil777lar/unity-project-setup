@@ -13,6 +13,7 @@ Unity 6 + URP project built on Larje packages (`com.larje.*`) with Zenject. The 
 - `Assets/_Project/Prefabs/UI`: UI screens (`UIScreen` + `UIScreenId`), listed in `UIConfig`.
 - `Assets/_Project/Scenes`: `Splash` (build index 0) and `Main`. `AppFlowService` shows the splash, sets the `Menu` state and loads `Main`. `MenuScreenController` opens the main menu screen.
 - `Assets/_Project/Settings`: URP asset and `GameInput.inputactions` (Player and UI maps).
+- `Assets/_Project/Editor`: editor assembly `{{Namespace}}.Editor`. `Builders/` holds idempotent builder scripts that create or update scenes, prefabs, configs and level data; run them in batch mode with the `unity-editor` skill (`run_method.py`).
 - `Assets/_Project/Tests/PlayMode`: playtests (assembly `{{Namespace}}.Playtests`) built on `Larje.ProjectSetup.Editor.Playtest.PlaytestSession`. `SmokePlaytest` boots from `Splash` to the main menu and takes screenshots.
 
 ## Architecture rules

@@ -1,0 +1,24 @@
+{
+    "name": "{{Namespace}}.Editor",
+    "rootNamespace": "{{Namespace}}.Editor",
+    "references": [
+        "{{Namespace}}",
+        "Larje.Core",
+        "Larje.Core.Editor",
+        "UniTask",
+        "Zenject",
+        "Unity.InputSystem",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -15,10 +15,10 @@ namespace {{Namespace}}.Playtests
             {
                 yield return session.LoadFirstScene();
                 yield return session.WaitSeconds(1f);
-                session.Capture("splash");
+                yield return session.CaptureAsync("splash");
                 yield return session.WaitForScene("Main");
                 yield return session.WaitSeconds(2f);
-                session.Capture("menu");
+                yield return session.CaptureAsync("menu");
                 session.DescribeButtons();
                 session.WriteReport();
                 Assert.IsEmpty(session.Errors, string.Join("\n", session.Errors));

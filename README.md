@@ -50,7 +50,7 @@ Exit codes: `0` done, `1` errors, `2` pending (the generated code must compile f
 | Ids | Game states, sound channels, `MainMenu` screen, `Coins` currency, `Default` placement |
 | Input | `Settings/GameInput.inputactions` from the Input System template, project-wide actions, `InputConfig`, `PointerControlConfig` |
 | Configs | Save, GameStates, SceneLoader, AppFlow (Splash → Main), TimeScale, Sound, Currency, Items, Purchases, DebugConsole |
-| UI | `Prefabs/UI/MainMenuScreen.prefab` listed in `UIConfig` |
+| UI | UI Toolkit base: `UI/LarjePanelSettings.asset` (scale with screen size, reference resolution by orientation), `UI/LarjeTheme.tss`, `UIConfig`, placeholder `UI/Screens/main_menu.uxml` (replaced by `design.py ui-export`), view sync (`Larje.UI.Editor.UIViewSync`) |
 | Scenes | `Scenes/Splash` and `Scenes/Main` with an EventSystem, added to Build Settings |
 | Project Code | `Scripts/<Namespace>.asmdef`, `ProjectInstaller`, `MenuScreenController`, the smoke playtest in `Tests/PlayMode` (`<Namespace>.Playtests`), plus `CLAUDE.md` in the project root |
 | Project Context | `Resources/ProjectContext.prefab` with the core, UI, character and project installers |

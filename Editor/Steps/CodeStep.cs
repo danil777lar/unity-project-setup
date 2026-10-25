@@ -28,6 +28,7 @@ namespace Larje.ProjectSetup.Editor.Steps
             created |= WriteTemplate(templates, "EditorAssembly.asmdef.txt", $"{ProjectSetupContext.ROOT}/Editor/{context.Options.RootNamespace}.Editor.asmdef", tokens);
             created |= WriteTemplate(templates, "Playtests.asmdef.txt", $"{ProjectSetupContext.ROOT}/Tests/PlayMode/{context.Options.RootNamespace}.Playtests.asmdef", tokens);
             created |= WriteTemplate(templates, "SmokePlaytest.cs.txt", $"{ProjectSetupContext.ROOT}/Tests/PlayMode/SmokePlaytest.cs", tokens);
+            created |= WriteTemplate(templates, "UIMockupTests.cs.txt", $"{ProjectSetupContext.ROOT}/Tests/PlayMode/UIMockupTests.cs", tokens);
             WriteTemplate(templates, "CLAUDE.md.txt", "CLAUDE.md", tokens);
 
             if (created)

@@ -6,6 +6,7 @@
         "Larje.Core",
         "Larje.UI",
         "Larje.ProjectSetup.Playtest",
+        "Larje.UI.Testing",
         "UniTask",
         "Zenject",
         "Unity.InputSystem",

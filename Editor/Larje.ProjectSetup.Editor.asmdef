@@ -6,6 +6,7 @@
         "Larje.Core.Zenject",
         "Larje.UI",
         "Larje.UI.Zenject",
+        "Larje.UI.Editor",
         "Zenject",
         "Unity.InputSystem",
         "Unity.RenderPipelines.Universal.Runtime",

@@ -1,0 +1,24 @@
+using System.Collections;
+using Larje.UI.Testing;
+using NUnit.Framework;
+using UnityEngine.TestTools;
+
+namespace {{Namespace}}.Playtests
+{
+    public sealed class UIMockupTests
+    {
+        [UnityTest]
+        public IEnumerator UIMatchesMockups()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            UIMockupSuite suite = new UIMockupSuite();
+            yield return suite.Run();
+            if (suite.Skipped)
+            {
+                Assert.Ignore(suite.Report);
+            }
+
+            Assert.IsEmpty(suite.Failures, suite.Report);
+        }
+    }
+}

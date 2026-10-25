@@ -11,6 +11,9 @@ namespace Larje.ProjectSetup.Editor.Playtest
         private readonly int _height;
         private readonly string _folder;
 
+        public int Width => _width;
+        public int Height => _height;
+
         public PlaytestCapture(string folder, int width, int height)
         {
             _folder = folder;
@@ -20,6 +23,11 @@ namespace Larje.ProjectSetup.Editor.Playtest
         }
 
         public string Capture(string name)
+        {
+            return Capture(name, null);
+        }
+
+        public string Capture(string name, Texture2D uiOverlay)
         {
             RenderTexture texture = new RenderTexture(_width, _height, 24, RenderTextureFormat.ARGB32) { antiAliasing = 2 };
             texture.Create();
@@ -38,7 +46,7 @@ namespace Larje.ProjectSetup.Editor.Playtest
 
                 top = cameras[cameras.Count - 1];
                 topCullingMask = top.cullingMask;
-                foreach (Canvas canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+                foreach (Canvas canvas in SceneObjects.All<Canvas>())
                 {
                     if (canvas.isRootCanvas && canvas.renderMode == RenderMode.ScreenSpaceOverlay && canvas.isActiveAndEnabled)
                     {
@@ -56,7 +64,7 @@ namespace Larje.ProjectSetup.Editor.Playtest
                     RenderInto(cameras[i], texture, i == 0);
                 }
 
-                return Save(texture, name);
+                return Save(texture, name, uiOverlay);
             }
             finally
             {
@@ -120,7 +128,7 @@ namespace Larje.ProjectSetup.Editor.Playtest
             camera.clearFlags = previousFlags;
         }
 
-        private string Save(RenderTexture texture, string name)
+        private string Save(RenderTexture texture, string name, Texture2D uiOverlay)
         {
             RenderTexture previous = RenderTexture.active;
             RenderTexture.active = texture;
@@ -128,10 +136,29 @@ namespace Larje.ProjectSetup.Editor.Playtest
             readback.ReadPixels(new Rect(0, 0, _width, _height), 0, 0);
             readback.Apply();
             RenderTexture.active = previous;
+            if (uiOverlay != null && uiOverlay.width == _width && uiOverlay.height == _height)
+            {
+                Blend(readback, uiOverlay);
+            }
+
             string path = Path.Combine(_folder, name + ".png");
             File.WriteAllBytes(path, readback.EncodeToPNG());
             Object.DestroyImmediate(readback);
             return path;
+        }
+
+        private void Blend(Texture2D target, Texture2D overlay)
+        {
+            Color32[] background = target.GetPixels32();
+            Color32[] front = overlay.GetPixels32();
+            for (int i = 0; i < background.Length; i++)
+            {
+                float alpha = front[i].a / 255f;
+                background[i] = Color32.Lerp(background[i], new Color32(front[i].r, front[i].g, front[i].b, 255), alpha);
+            }
+
+            target.SetPixels32(background);
+            target.Apply();
         }
 
         private readonly struct OverlayState

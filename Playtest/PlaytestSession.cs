@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Larje.UI.Testing;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -91,6 +92,20 @@ namespace Larje.ProjectSetup.Editor.Playtest
             return path;
         }
 
+        public IEnumerator CaptureAsync(string label)
+        {
+            Texture2D overlay = null;
+            yield return UIPanelCapture.Capture(_capture.Width, _capture.Height, texture => overlay = texture);
+            string path = _capture.Capture($"{_screenshots.Count:D2}-{label}", overlay);
+            if (overlay != null)
+            {
+                UnityEngine.Object.Destroy(overlay);
+            }
+
+            _screenshots.Add(path);
+            Step($"Screenshot {path}");
+        }
+
         public List<string> DescribeButtons()
         {
             List<string> result = new List<string>();
@@ -99,12 +114,25 @@ namespace Larje.ProjectSetup.Editor.Playtest
                 result.Add($"{button.name} \"{GetLabel(button)}\" interactable={button.IsInteractable()}");
             }
 
+            foreach (UnityEngine.UIElements.Button button in UIInteraction.Buttons())
+            {
+                result.Add(UIInteraction.Describe(button) + " (UI Toolkit)");
+            }
+
             Step("Buttons: " + (result.Count == 0 ? "none" : string.Join("; ", result)));
             return result;
         }
 
         public bool Click(string nameOrLabel, bool required = true)
         {
+            UnityEngine.UIElements.Button toolkitButton = UIInteraction.Find(nameOrLabel);
+            if (toolkitButton != null)
+            {
+                UIInteraction.Click(toolkitButton);
+                Step($"Clicked '{toolkitButton.name}' (UI Toolkit)");
+                return true;
+            }
+
             Button button = FindButtons().FirstOrDefault(x => x.IsInteractable() && Matches(x, nameOrLabel));
             if (button == null)
             {
@@ -165,7 +193,7 @@ namespace Larje.ProjectSetup.Editor.Playtest
 
         private IEnumerable<Button> FindButtons()
         {
-            return UnityEngine.Object.FindObjectsByType<Button>(FindObjectsSortMode.None).Where(x => x.isActiveAndEnabled);
+            return SceneObjects.All<Button>().Where(x => x.isActiveAndEnabled);
         }
 
         private bool Matches(Button button, string nameOrLabel)
